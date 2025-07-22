@@ -5,33 +5,28 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 
 /*
-  Fuels version: 0.101.2
+  Fuels version: 0.101.3
 */
 
-import {
+import { Contract as __Contract, Interface } from "fuels";
+import type {
+  Provider,
+  Account,
+  StorageSlot,
+  Address,
   BigNumberish,
   BN,
-  decompressBytecode,
-  InputValue,
-  Predicate as __Predicate,
-  PredicateParams,
-  Provider,
+  FunctionFragment,
+  InvokeFunction,
 } from 'fuels';
 
 export type AddressInput = { bits: string };
 export type AddressOutput = AddressInput;
 
 export type MultiSigConfigurables = Partial<{
-    SIGNERS: [AddressInput, AddressInput, AddressInput];
-    REQUIRED_SIGNATURES: BigNumberish;
+  SIGNERS: [AddressInput, AddressInput, AddressInput];
+  REQUIRED_SIGNATURES: BigNumberish;
 }>;
-
-export type MultiSigInputs = [];
-
-export type MultiSigParameters = Omit<
-  PredicateParams<MultiSigInputs, MultiSigConfigurables>,
-  'abi' | 'bytecode'
->;
 
 const abi = {
   "programType": "predicate",
@@ -105,16 +100,31 @@ const abi = {
   "errorCodes": {}
 };
 
-const bytecode = decompressBytecode('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');
+const storageSlots: StorageSlot[] = [];
 
-export class MultiSig extends __Predicate<
-  MultiSigInputs,
-  MultiSigConfigurables
-> {
+export class MultiSigInterface extends Interface {
+  constructor() {
+    super(abi);
+  }
+
+  declare functions: {
+    main: FunctionFragment;
+  };
+}
+
+export class MultiSig extends __Contract {
   static readonly abi = abi;
-  static readonly bytecode = bytecode;
+  static readonly storageSlots = storageSlots;
 
-  constructor(params: MultiSigParameters) {
-    super({ abi, bytecode, ...params });
+  declare interface: MultiSigInterface;
+  declare functions: {
+    main: InvokeFunction<[], boolean>;
+  };
+
+  constructor(
+    id: string | Address,
+    accountOrProvider: Account | Provider,
+  ) {
+    super(id, abi, accountOrProvider);
   }
 }
