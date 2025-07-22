@@ -1,0 +1,16 @@
+{
+  "name": "rosetta-stone-ts",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/jest": "^30.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "fuels": "^0.101.3"
+  }
+}
