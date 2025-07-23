@@ -299,6 +299,10 @@ const abi = {
           ]
         },
         {
+          "name": "payable",
+          "arguments": []
+        },
+        {
           "name": "storage",
           "arguments": [
             "read",

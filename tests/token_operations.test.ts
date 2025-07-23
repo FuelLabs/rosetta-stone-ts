@@ -120,7 +120,7 @@ test('should perform token operations', async () => {
   
   console.log('✅ Mint transaction successful!');
   console.log(`   Transaction ID: ${mintCall.transactionId}`);
-  console.log(`   Transaction status: ${JSON.stringify(mintResult.status)}`);
+  console.log(`   Transaction status: ${JSON.stringify(mintResult.transactionResult.status)}`);
 
   // Verify mint transaction logs/events (equivalent to Rust decode_logs check)
   if (mintResult.transactionResult) {
@@ -135,7 +135,7 @@ test('should perform token operations', async () => {
     .call();
   const assetIdCall = await assetIdResult.waitForResult();
   const assetIdObj = assetIdCall.value;
-  const assetIdString = assetIdObj.bits || assetIdObj;
+  const assetIdString = typeof assetIdObj === 'string' ? assetIdObj : assetIdObj.bits;
 
   console.log(`📊 Asset ID: ${assetIdString}`);
 

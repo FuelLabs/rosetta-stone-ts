@@ -88,7 +88,7 @@ test('should perform simple token operations', async () => {
     .call();
   const assetIdCall = await assetIdResult.waitForResult();
   const assetIdObj = assetIdCall.value;
-  const assetIdString = assetIdObj.bits || assetIdObj;
+  const assetIdString = typeof assetIdObj === 'string' ? assetIdObj : assetIdObj.bits;
 
   console.log(`📊 Asset ID: ${assetIdString}`);
 
@@ -220,7 +220,7 @@ test('should handle token minting scenarios', async () => {
     .call();
   const assetIdCall = await assetIdResult.waitForResult();
   const assetIdObj = assetIdCall.value;
-  const assetIdString = assetIdObj.bits || assetIdObj;
+  const assetIdString = typeof assetIdObj === 'string' ? assetIdObj : assetIdObj.bits;
 
   console.log(`📊 Asset ID: ${assetIdString}`);
 
