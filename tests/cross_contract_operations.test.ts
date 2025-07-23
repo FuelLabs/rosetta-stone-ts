@@ -33,6 +33,20 @@ const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
+ * Utility function to format amounts with commas
+ */
+function formatAmount(amount: number): string {
+  return amount.toLocaleString();
+}
+
+/**
+ * Utility function to truncate addresses
+ */
+function truncateAddress(address: string): string {
+  return `${address.substring(0, 10)}...`;
+}
+
+/**
  * Deploys the SRC20 token contract with the given wallet and metadata.
  */
 async function deploySrc20Token(
@@ -41,7 +55,7 @@ async function deploySrc20Token(
   symbol: string,
   decimals: number
 ): Promise<Src20Token> {
-  console.log(`🚀 Deploying SRC20 token: ${name} (${symbol})`);
+  console.log(`Deploying ${name} (${symbol}) token...`);
 
   // Configure the token parameters
   const tokenConfig = {
@@ -59,7 +73,7 @@ async function deploySrc20Token(
   });
   const { contract: deployedContract } = await waitForResult();
 
-  console.log(`✅ Token '${name}' (${symbol}) deployed at: ${deployedContract.id.toString()}`);
+  console.log(`${name} deployed at ${truncateAddress(deployedContract.id.toString())}`);
   
   return new Src20Token(deployedContract.id, wallet);
 }
@@ -70,7 +84,7 @@ async function deploySrc20Token(
 async function deployCrossContractCall(
   adminWallet: WalletUnlocked
 ): Promise<CrossContractCall> {
-  console.log('🚀 Deploying CrossContractCall contract...');
+  console.log('Deploying CrossContractCall...');
 
   // Configure with admin
   const crossContractConfig = {
@@ -83,7 +97,7 @@ async function deployCrossContractCall(
   });
   const { contract: deployedContract } = await waitForResult();
 
-  console.log(`✅ CrossContractCall deployed at: ${deployedContract.id.toString()}`);
+  console.log(`CrossContractCall deployed at ${truncateAddress(deployedContract.id.toString())}`);
   
   return new CrossContractCall(deployedContract.id, adminWallet);
 }
@@ -95,7 +109,7 @@ async function deployTokenVault(
   wallet: WalletUnlocked,
   crossContractCallContract: CrossContractCall
 ): Promise<TokenVault> {
-  console.log('🚀 Deploying TokenVault contract...');
+  console.log('Deploying TokenVault...');
 
   // Configure the vault parameters
   const vaultConfig = {
@@ -109,7 +123,7 @@ async function deployTokenVault(
   });
   const { contract: deployedContract } = await waitForResult();
 
-  console.log(`✅ TokenVault deployed at: ${deployedContract.id.toString()}`);
+  console.log(`TokenVault deployed at ${truncateAddress(deployedContract.id.toString())}`);
   
   return new TokenVault(deployedContract.id, wallet);
 }
@@ -118,7 +132,8 @@ async function deployTokenVault(
  * Test cross-contract call functionality
  */
 test('should handle cross-contract call', async () => {
-  console.log('🧪 Testing cross-contract call...');
+  console.log('\nCROSS-CONTRACT CALL TEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Set up test wallets
   using launched = await launchTestNode({
@@ -142,12 +157,13 @@ test('should handle cross-contract call', async () => {
     throw new Error('Failed to initialize admin and user wallets');
   }
 
-  console.log('✅ Test wallets created:');
-  console.log(`   Admin wallet: ${adminWallet.address.toString()}`);
-  console.log(`   User wallet: ${userWallet.address.toString()}`);
+  console.log('\nWallet Setup:');
+  console.log(`Admin: ${truncateAddress(adminWallet.address.toString())}`);
+  console.log(`User:  ${truncateAddress(userWallet.address.toString())}`);
 
   // Deploy contracts
-  console.log('🚀 Deploying contracts...');
+  console.log('\nContract Deployment:');
+  console.log('─────────────────────');
 
   const tokenContract = await deploySrc20Token(
     adminWallet,
@@ -166,7 +182,7 @@ test('should handle cross-contract call', async () => {
   // Create user vault contract instance
   const userVaultContract = new TokenVault(vaultContract.id, userWallet);
 
-  console.log('✅ All contracts deployed successfully');
+  console.log('All contracts deployed successfully\n');
 
   // Mint tokens to admin wallet for cross-contract authorization
   const mintAmount = TOKEN_AMOUNT;
@@ -174,7 +190,9 @@ test('should handle cross-contract call', async () => {
 
   const adminTokenContract = new Src20Token(tokenContract.id, adminWallet);
 
-  console.log(`🔄 Minting ${mintAmount} tokens to admin wallet...`);
+  console.log('Token Operations:');
+  console.log('─────────────────');
+  console.log(`Minting ${formatAmount(mintAmount)} tokens to admin...`);
   
   try {
     const mintCall = await adminTokenContract.functions
@@ -182,9 +200,9 @@ test('should handle cross-contract call', async () => {
       .call();
 
     await mintCall.waitForResult();
-    console.log('✅ Mint successful');
+    console.log('Mint completed');
   } catch (error) {
-    console.log(`❌ Mint failed: ${error}`);
+    console.log(`Mint failed: ${error}`);
     throw error;
   }
 
@@ -196,11 +214,11 @@ test('should handle cross-contract call', async () => {
   const assetIdObj = assetIdCall.value;
   const assetIdString = typeof assetIdObj === 'string' ? assetIdObj : assetIdObj.bits;
 
-  console.log(`📊 Asset ID: ${assetIdString}`);
+  console.log(`Asset ID: ${truncateAddress(assetIdString)}`);
 
   // Check admin wallet balance
   const adminBalance = await adminWallet.getBalance(assetIdString);
-  console.log(`💰 Admin balance before deposit: ${adminBalance.toString()}`);
+  console.log(`Admin balance: ${formatAmount(adminBalance.toNumber())}`);
 
   // Get initial deposit balance for user
   let initialDepositBalance;
@@ -211,23 +229,24 @@ test('should handle cross-contract call', async () => {
     const initialDepositCall = await initialDepositResult.waitForResult();
     initialDepositBalance = initialDepositCall.value;
 
-    console.log(`📊 Initial deposit balance for user: ${initialDepositBalance}`);
+    console.log(`Initial user deposit: ${formatAmount(Number(initialDepositBalance))}`);
   } catch (error) {
-    console.log(`❌ Failed to get initial deposit balance: ${error}`);
+    console.log(`Failed to get initial deposit: ${error}`);
     throw error;
   }
 
   const depositAmount = 100;
 
-  console.log(`🔄 Preparing deposit of ${depositAmount} tokens...`);
-  console.log('🔄 Executing cross-contract deposit...');
-  console.log(`  From: Admin wallet (${adminWallet.address.toString()})`);
-  console.log(`  To: User (${userWallet.address.toString()}) via cross-contract call`);
+  console.log('\nCross-Contract Deposit:');
+  console.log('─────────────────────────');
+  console.log(`Depositing ${formatAmount(depositAmount)} tokens via cross-contract call`);
+  console.log(`From: Admin (${truncateAddress(adminWallet.address.toString())})`);
+  console.log(`To:   User  (${truncateAddress(userWallet.address.toString())})`);
 
   // Check if admin has enough balance
   if (adminBalance.toNumber() < depositAmount) {
     throw new Error(
-      `❌ Admin has insufficient balance: ${adminBalance.toString()} < ${depositAmount}`
+      `Admin has insufficient balance: ${formatAmount(adminBalance.toNumber())} < ${formatAmount(depositAmount)}`
     );
   }
 
@@ -246,11 +265,9 @@ test('should handle cross-contract call', async () => {
 
     const crossContractDepositResult = await crossContractDepositCall.waitForResult();
     
-    console.log('✅ Cross-contract deposit successful');
-    console.log(`📋 Transaction ID: ${crossContractDepositCall.transactionId}`);
-    console.log(`📋 Transaction Status: ${JSON.stringify(crossContractDepositResult.transactionResult.status)}`);
+    console.log('Cross-contract deposit completed');
   } catch (error) {
-    console.log(`❌ Cross-contract deposit failed: ${error}`);
+    console.log(`Cross-contract deposit failed: ${error}`);
     throw error;
   }
 
@@ -263,35 +280,34 @@ test('should handle cross-contract call', async () => {
     const finalDepositCall = await finalDepositResult.waitForResult();
     finalDepositBalance = finalDepositCall.value;
 
-    console.log(`✅ Final deposit balance for user: ${finalDepositBalance}`);
+    console.log(`Final user deposit: ${formatAmount(Number(finalDepositBalance))}`);
   } catch (error) {
-    console.log(`❌ Failed to get final deposit balance: ${error}`);
+    console.log(`Failed to get final deposit: ${error}`);
     throw error;
   }
 
   const balanceIncrease = Number(finalDepositBalance) - Number(initialDepositBalance);
-  console.log(`📈 Balance increase: ${balanceIncrease} (expected: ${depositAmount})`);
+  console.log(`Balance increase: ${formatAmount(balanceIncrease)} (expected: ${formatAmount(depositAmount)})`);
   
   // Verify the cross-contract deposit worked
   expect(balanceIncrease).toBe(depositAmount);
-  
-  console.log('✅ Cross Contract Call Deposit verification passed');
 
   // Verify admin wallet balance decreased
   const adminBalanceAfter = await adminWallet.getBalance(assetIdString);
-  console.log(`💰 Admin balance after deposit: ${adminBalanceAfter.toString()}`);
-  
   const adminBalanceDecrease = adminBalance.toNumber() - adminBalanceAfter.toNumber();
-  console.log(`📉 Admin balance decrease: ${adminBalanceDecrease} (expected: ${depositAmount})`);
+  console.log(`Admin balance decrease: ${formatAmount(adminBalanceDecrease)}`);
 
-  console.log('✅ Cross-contract call test passed');
+  console.log('\nTest Summary:');
+  console.log('─────────────');
+  console.log('Cross-contract call test PASSED');
 });
 
 /**
  * Test unauthorized cross-contract calls with user wallet
  */
 test('should reject unauthorized cross-contract calls', async () => {
-  console.log('🧪 Testing cross-contract call with user sending tokens (should fail)...');
+  console.log('\nUNAUTHORIZED CROSS-CONTRACT TEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Set up test wallets
   using launched = await launchTestNode({
@@ -314,9 +330,14 @@ test('should reject unauthorized cross-contract calls', async () => {
     throw new Error('Failed to initialize admin and user wallets');
   }
 
-  console.log('✅ Test wallets created for authorization test');
+  console.log('\nWallet Setup:');
+  console.log(`Admin: ${truncateAddress(adminWallet.address.toString())}`);
+  console.log(`User:  ${truncateAddress(userWallet.address.toString())}`);
 
   // Deploy contracts
+  console.log('\nContract Deployment:');
+  console.log('─────────────────────');
+
   const tokenContract = await deploySrc20Token(
     adminWallet,
     "USERTOK",
@@ -331,7 +352,7 @@ test('should reject unauthorized cross-contract calls', async () => {
     crossContractCallContract
   );
 
-  console.log('✅ Contracts deployed for authorization test');
+  console.log('All contracts deployed successfully\n');
 
   // Mint tokens to USER wallet
   const mintAmount = TOKEN_AMOUNT;
@@ -339,12 +360,15 @@ test('should reject unauthorized cross-contract calls', async () => {
 
   const adminTokenContract = new Src20Token(tokenContract.id, adminWallet);
 
-  console.log(`🔄 Minting ${mintAmount} tokens to user wallet...`);
+  console.log('Token Operations:');
+  console.log('─────────────────');
+  console.log(`Minting ${formatAmount(mintAmount)} tokens to user...`);
   
   const mintCall = await adminTokenContract.functions
     .mint(recipient, SUB_ID, mintAmount)
     .call();
   await mintCall.waitForResult();
+  console.log('Mint completed');
 
   const assetIdResult = await adminTokenContract.functions
     .get_asset_id()
@@ -361,7 +385,9 @@ test('should reject unauthorized cross-contract calls', async () => {
 
   const depositAmount = 100;
 
-  console.log('🔄 Attempting unauthorized cross-contract call...');
+  console.log('\nAuthorization Test:');
+  console.log('──────────────────');
+  console.log('Attempting unauthorized cross-contract call...');
 
   // This should fail because only admin can call the cross-contract function
   try {
@@ -379,14 +405,15 @@ test('should reject unauthorized cross-contract calls', async () => {
     await unauthorizedCall.waitForResult();
     
     // If we get here, the test should fail
-    throw new Error('❌ This should have failed! User should not be able to call admin-only function');
+    throw new Error('This should have failed! User should not be able to call admin-only function');
   } catch (error) {
-    console.log('✅ Expected failure: User cannot call admin-only function');
-    console.log(`   Error: ${error}`);
+    console.log('Expected failure: User cannot call admin-only function');
     
     // Any error is expected here due to admin restriction - the fact we caught an error means the test passed
     expect(error).toBeDefined();
   }
 
-  console.log('✅ User authorization test passed');
+  console.log('\nTest Summary:');
+  console.log('─────────────');
+  console.log('User authorization test PASSED');
 }); 

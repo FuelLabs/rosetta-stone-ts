@@ -34,6 +34,20 @@ const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
+ * Helper function to format addresses for display
+ */
+function formatAddress(address: string): string {
+  return `${address.slice(0, 10)}...`;
+}
+
+/**
+ * Helper function to format amounts with commas
+ */
+function formatAmount(amount: number): string {
+  return amount.toLocaleString();
+}
+
+/**
  * Deploys the SRC20 token contract with the given wallet and metadata.
  */
 async function deploySrc20Token(
@@ -42,8 +56,6 @@ async function deploySrc20Token(
   symbol: string,
   decimals: number
 ): Promise<Src20Token> {
-  console.log(`🚀 Deploying SRC20 token: ${name} (${symbol})`);
-
   // Configure the token parameters
   const tokenConfig = {
     NAME: name,
@@ -60,7 +72,7 @@ async function deploySrc20Token(
   });
   const { contract: deployedContract } = await waitForResult();
 
-  console.log(`✅ Token '${name}' (${symbol}) deployed at: ${deployedContract.id.toString()}`);
+  console.log(`${name} (${symbol}) deployed at ${formatAddress(deployedContract.id.toString())}`);
   
   return new Src20Token(deployedContract.id, wallet);
 }
@@ -71,13 +83,11 @@ async function deploySrc20Token(
 async function deployCrossContractCall(
   adminWallet: WalletUnlocked
 ): Promise<CrossContractCall> {
-  console.log('🚀 Deploying CrossContractCall contract...');
-
   const factory = new CrossContractCallFactory(adminWallet);
   const { waitForResult } = await factory.deploy();
   const { contract: deployedContract } = await waitForResult();
 
-  console.log(`✅ CrossContractCall deployed at: ${deployedContract.id.toString()}`);
+  console.log(`CrossContractCall deployed at ${formatAddress(deployedContract.id.toString())}`);
   
   return new CrossContractCall(deployedContract.id, adminWallet);
 }
@@ -89,8 +99,6 @@ async function deployTokenVault(
   wallet: WalletUnlocked,
   crossContractCallContract: CrossContractCall
 ): Promise<TokenVault> {
-  console.log('🚀 Deploying TokenVault contract...');
-
   // Configure the vault parameters
   const vaultConfig = {
     CROSS_CONTRACT_CALL: { bits: crossContractCallContract.id.toB256() },
@@ -103,7 +111,7 @@ async function deployTokenVault(
   });
   const { contract: deployedContract } = await waitForResult();
 
-  console.log(`✅ TokenVault deployed at: ${deployedContract.id.toString()}`);
+  console.log(`TokenVault deployed at ${formatAddress(deployedContract.id.toString())}`);
   
   return new TokenVault(deployedContract.id, wallet);
 }
@@ -112,7 +120,8 @@ async function deployTokenVault(
  * Test advanced blockchain patterns
  */
 test('should handle advanced patterns', async () => {
-  console.log('🧪 Testing advanced patterns...');
+  console.log('\nADVANCED PATTERNS TEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Set up test wallets
   using launched = await launchTestNode({
@@ -134,11 +143,11 @@ test('should handle advanced patterns', async () => {
     throw new Error('Failed to initialize admin wallet');
   }
 
-  console.log('✅ Test wallets created');
-  console.log(`   Admin wallet: ${adminWallet.address.toString()}`);
+  console.log('\nInitializing test environment...');
+  console.log(`Admin wallet: ${formatAddress(adminWallet.address.toString())}`);
 
   // Deploy contracts
-  console.log('🚀 Deploying contracts...');
+  console.log('\nDeploying contracts...');
 
   const tokenContract = await deploySrc20Token(
     adminWallet,
@@ -154,24 +163,26 @@ test('should handle advanced patterns', async () => {
     crossContractCallContract
   );
 
-  console.log('✅ All contracts deployed successfully');
+  console.log('All contracts deployed successfully\n');
 
   // Test block manipulation
-  console.log('🧪 Testing block manipulation...');
+  console.log('BLOCK MANIPULATION TEST');
+  console.log('─────────────────────────────────────────────────');
   
   const initialHeight = await provider.getBlockNumber();
-  console.log(`📊 Initial block height: ${initialHeight}`);
+  console.log(`Initial block height: ${initialHeight.toString()}`);
 
   // Produce blocks
   await provider.produceBlocks(5);
   const newHeight = await provider.getBlockNumber();
-  console.log(`📊 New block height: ${newHeight}`);
+  console.log(`New block height: ${newHeight.toString()}`);
 
   expect(newHeight.toNumber()).toBe(initialHeight.toNumber() + 5);
-  console.log('✅ Block manipulation test passed');
+  console.log('Block manipulation completed\n');
 
   // Test gas optimization
-  console.log('🧪 Testing gas optimization...');
+  console.log('GAS OPTIMIZATION TEST');
+  console.log('─────────────────────────────────────────────────');
   
   const adminTokenContract = new Src20Token(tokenContract.id, adminWallet);
   const recipient = { Address: { bits: adminWallet.address.toB256() } };
@@ -179,33 +190,27 @@ test('should handle advanced patterns', async () => {
   // Check wallet balance before transaction
   const baseAssetId = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const baseBalance = await adminWallet.getBalance(baseAssetId);
-  console.log(`💰 Base balance: ${baseBalance.toString()}`);
+  console.log(`Base balance: ${formatAmount(baseBalance.toNumber())}`);
 
   // Estimate gas cost
-  console.log('⛽ Estimating gas cost...');
+  console.log('Estimating gas cost...');
   
   try {
     const estimatedCost = await adminTokenContract.functions
       .mint(recipient, SUB_ID, TOKEN_AMOUNT)
       .getTransactionCost();
 
-    console.log(`⛽ Estimated gas cost: ${JSON.stringify({
-      gasUsed: estimatedCost.gasUsed.toString(),
-      gasPrice: estimatedCost.gasPrice.toString()
-    })}`);
-
-    console.log('✅ Gas estimation completed');
+    console.log(`Gas used: ${estimatedCost.gasUsed.toString()}`);
+    console.log(`Gas price: ${estimatedCost.gasPrice.toString()}`);
 
     // Test with custom transaction policies
-    console.log('🧪 Testing custom transaction policies...');
+    console.log('\nTesting custom transaction policies...');
     
     const customPolicies = {
       gasLimit: estimatedCost.gasUsed.mul(2),
     };
 
-    console.log(`📋 Custom policies: ${JSON.stringify({
-      gasLimit: customPolicies.gasLimit.toString()
-    })}`);
+    console.log(`Custom gas limit: ${customPolicies.gasLimit.toString()}`);
 
     const txnWithCustomPolicies = await adminTokenContract.functions
       .mint(recipient, SUB_ID, TOKEN_AMOUNT)
@@ -214,24 +219,23 @@ test('should handle advanced patterns', async () => {
 
     const result = await txnWithCustomPolicies.waitForResult();
     
-    console.log('✅ Mint with custom policies successful');
-    console.log(`📋 Transaction ID: ${txnWithCustomPolicies.transactionId}`);
+    console.log(`Mint completed | TX: ${formatAddress(txnWithCustomPolicies.transactionId)}`);
 
     // Verify transaction completed successfully
     expect(result.transactionResult.isStatusSuccess).toBe(true);
 
     // Check final balances
     const balances = await adminWallet.getBalances();
-    console.log(`💰 Final balances count: ${balances.balances.length}`);
+    console.log(`Final balances: ${balances.balances.length} assets`);
     
     for (const balance of balances.balances) {
-      console.log(`   Asset ${balance.assetId}: ${balance.amount.toString()}`);
+      console.log(`Asset ${formatAddress(balance.assetId)}: ${formatAmount(balance.amount.toNumber())}`);
     }
 
-    console.log('✅ Advanced patterns test passed successfully');
+    console.log('Gas optimization test completed\n');
     
   } catch (error) {
-    console.log(`❌ Gas optimization test failed: ${error}`);
+    console.log(`Gas optimization failed: ${error}`);
     throw error;
   }
 });
@@ -240,7 +244,8 @@ test('should handle advanced patterns', async () => {
  * Test comprehensive logging functionality
  */
 test('should handle comprehensive logging', async () => {
-  console.log('🧪 Testing comprehensive logging...');
+  console.log('\nCOMPREHENSIVE LOGGING TEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Set up test environment
   using launched = await launchTestNode({
@@ -257,15 +262,16 @@ test('should handle comprehensive logging', async () => {
     throw new Error('Failed to initialize wallet');
   }
 
+  console.log('\nDeploying test contract...');
   const tokenContract = await deploySrc20Token(wallet, "MYTOKEN", "TOKEN", 9);
-
-  console.log('✅ Token contract deployed for logging test');
+  console.log('Contract deployment completed\n');
 
   // Test various operations with logging
   const recipient = { Address: { bits: wallet.address.toB256() } };
 
   // Mint operation
-  console.log('📝 Testing mint operation logging...');
+  console.log('MINT OPERATION LOGGING');
+  console.log('─────────────────────────────────────────────────');
   
   const mintCall = await tokenContract.functions
     .mint(recipient, SUB_ID, 10000)
@@ -275,11 +281,11 @@ test('should handle comprehensive logging', async () => {
   
   // Check transaction logs
   if (mintResult.transactionResult.receipts) {
-    console.log(`📝 Total receipts: ${mintResult.transactionResult.receipts.length}`);
+    console.log(`Mint completed | Receipts: ${mintResult.transactionResult.receipts.length}`);
     
     // Log receipt types for debugging
     mintResult.transactionResult.receipts.forEach((receipt, index) => {
-      console.log(`   Receipt ${index}: ${receipt.type}`);
+      console.log(`Receipt ${index}: ${receipt.type}`);
     });
   }
 
@@ -292,7 +298,8 @@ test('should handle comprehensive logging', async () => {
   const assetIdString = typeof assetIdObj === 'string' ? assetIdObj : assetIdObj.bits;
 
   // Test burn operation
-  console.log('🔥 Testing burn operation logging...');
+  console.log('\nBURN OPERATION LOGGING');
+  console.log('─────────────────────────────────────────────────');
   
   const burnAmount = 5000;
   
@@ -308,14 +315,13 @@ test('should handle comprehensive logging', async () => {
     
     // Check burn transaction logs
     if (burnResult.transactionResult.receipts) {
-      console.log(`🔥 Burn receipts: ${burnResult.transactionResult.receipts.length}`);
+      console.log(`Burn completed | Receipts: ${burnResult.transactionResult.receipts.length}`);
     }
 
-    console.log('✅ Comprehensive logging test passed');
+    console.log('Comprehensive logging test completed');
   } catch (error) {
-    console.log(`⚠️  Burn operation failed (expected if insufficient balance): ${error}`);
-    // Burn might fail if insufficient balance, which is acceptable for logging test
-    console.log('✅ Comprehensive logging test passed (mint logging verified)');
+    console.log(`Burn operation failed (insufficient balance): ${error}`);
+    console.log('Comprehensive logging test completed (mint logging verified)');
   }
 });
 
@@ -323,7 +329,8 @@ test('should handle comprehensive logging', async () => {
  * Test performance benchmarks
  */
 test('should handle performance benchmarks', async () => {
-  console.log('🧪 Testing performance benchmarks...');
+  console.log('\nPERFORMANCE BENCHMARKS TEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Set up test environment
   using launched = await launchTestNode({
@@ -340,14 +347,16 @@ test('should handle performance benchmarks', async () => {
     throw new Error('Failed to initialize wallet');
   }
 
+  console.log('\nDeploying test contract...');
   const tokenContract = await deploySrc20Token(wallet, "MYTOKEN", "TOKEN", 9);
   const adminTokenContract = new Src20Token(tokenContract.id, wallet);
-
-  console.log('✅ Token contract deployed for performance test');
+  console.log('Contract deployment completed\n');
 
   // Benchmark batch operations
   const batchSize = 10;
-  console.log(`⏱️  Starting batch of ${batchSize} operations...`);
+  console.log('BATCH OPERATIONS BENCHMARK');
+  console.log('─────────────────────────────────────────────────');
+  console.log(`Starting batch of ${batchSize} operations...`);
   
   const startTime = Date.now();
 
@@ -361,15 +370,15 @@ test('should handle performance benchmarks', async () => {
     await mintCall.waitForResult();
     
     if ((i + 1) % 3 === 0) {
-      console.log(`   Completed ${i + 1}/${batchSize} operations`);
+      console.log(`Progress: ${i + 1}/${batchSize} operations completed`);
     }
   }
 
   const elapsed = Date.now() - startTime;
-  console.log(`⏱️  Batch of ${batchSize} operations took: ${elapsed}ms`);
+  console.log(`Batch operations completed in ${elapsed}ms`);
 
   // Verify final state
-  console.log('🔍 Verifying final state...');
+  console.log('\nVerifying final state...');
   
   const assetIdResult = await adminTokenContract.functions
     .get_asset_id()
@@ -384,20 +393,20 @@ test('should handle performance benchmarks', async () => {
   const expectedTotal = Array.from({ length: batchSize }, (_, i) => (i + 1) * 1000)
     .reduce((sum, value) => sum + value, 0);
   
-  console.log(`📊 Final balance: ${finalBalance.toString()}`);
-  console.log(`📊 Expected total: ${expectedTotal}`);
+  console.log(`Final balance: ${formatAmount(finalBalance.toNumber())}`);
+  console.log(`Expected total: ${formatAmount(expectedTotal)}`);
   
   expect(finalBalance.toNumber()).toBe(expectedTotal);
 
   // Performance metrics
   const avgTimePerOperation = elapsed / batchSize;
-  console.log(`📈 Average time per operation: ${avgTimePerOperation.toFixed(2)}ms`);
+  console.log(`Average time per operation: ${avgTimePerOperation.toFixed(2)}ms`);
   
   if (avgTimePerOperation < 1000) { // Less than 1 second per operation
-    console.log('🚀 Performance is within acceptable limits');
+    console.log('Performance within acceptable limits');
   } else {
-    console.log('⚠️  Performance might need optimization');
+    console.log('Performance may need optimization');
   }
 
-  console.log('✅ Performance benchmarks test passed');
+  console.log('Performance benchmarks test completed');
 }); 

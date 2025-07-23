@@ -27,6 +27,20 @@ const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
+ * Helper function to format addresses for display
+ */
+function formatAddress(address: string): string {
+  return `${address.slice(0, 10)}...`;
+}
+
+/**
+ * Helper function to format amounts with commas
+ */
+function formatAmount(amount: number): string {
+  return amount.toLocaleString();
+}
+
+/**
  * Deploys the SRC20 token contract with the given wallet and metadata.
  * Returns a contract instance for further interaction.
  */
@@ -36,8 +50,6 @@ async function deploySrc20Token(
   symbol: string,
   decimals: number
 ): Promise<Src20Token> {
-  console.log(`🚀 Deploying SRC20 token: ${name} (${symbol})`);
-
   // Configure the token parameters
   const tokenConfig = {
     NAME: name,
@@ -54,7 +66,7 @@ async function deploySrc20Token(
   });
   const { contract: deployedContract } = await waitForResult();
 
-  console.log(`✅ Token '${name}' (${symbol}) deployed at: ${deployedContract.id.toString()}`);
+  console.log(`${name} (${symbol}) deployed at ${formatAddress(deployedContract.id.toString())}`);
   
   return new Src20Token(deployedContract.id, wallet);
 }
@@ -63,7 +75,8 @@ async function deploySrc20Token(
  * Test basic token operations including minting, transfers, and supply checks
  */
 test('should perform token operations', async () => {
-  console.log('🧪 Testing token operations...');
+  console.log('\nTOKEN OPERATIONS TEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Set up test wallets
   using launched = await launchTestNode({
@@ -80,10 +93,13 @@ test('should perform token operations', async () => {
     throw new Error('Failed to initialize wallets');
   }
 
-  console.log('✅ Test wallets created:');
-  console.log(`   Admin wallet: ${adminWallet.address.toString()}`);
-  console.log(`   User wallet: ${userWallet.address.toString()}`);
+  console.log('\nWallet Setup');
+  console.log('─────────────');
+  console.log(`Admin: ${formatAddress(adminWallet.address.toString())}`);
+  console.log(`User:  ${formatAddress(userWallet.address.toString())}`);
 
+  console.log('\nContract Deployment');
+  console.log('───────────────────');
   // Deploy the SRC20 token contract
   const tokenContract = await deploySrc20Token(
     adminWallet,
@@ -98,13 +114,15 @@ test('should perform token operations', async () => {
     adminWallet
   );
 
-  console.log('✅ Admin token contract instance created');
+  console.log('Contract deployment completed\n');
 
+  console.log('Token Minting');
+  console.log('─────────────');
   // Mint tokens to the user wallet
   const mintAmount = TOKEN_AMOUNT;
   const recipient = { Address: { bits: userWallet.address.toB256() } };
 
-  console.log(`🔄 Minting ${mintAmount} tokens to user: ${userWallet.address.toString()}`);
+  console.log(`Minting ${formatAmount(mintAmount)} tokens to ${formatAddress(userWallet.address.toString())}`);
 
   // Mint tokens to the recipient (user wallet)
   const mintCall = await adminTokenContract.functions
@@ -113,14 +131,10 @@ test('should perform token operations', async () => {
 
   const mintResult = await mintCall.waitForResult();
   
-  console.log('✅ Mint transaction successful!');
-  console.log(`   Transaction ID: ${mintCall.transactionId}`);
-  console.log(`   Transaction status: ${JSON.stringify(mintResult.transactionResult.status)}`);
+  console.log(`Mint completed | TX: ${formatAddress(mintCall.transactionId)}`);
 
   // Verify mint transaction logs/events
   if (mintResult.transactionResult) {
-    console.log('📋 Mint transaction result available');
-    // In TypeScript SDK, we can check transaction success through status
     expect(mintResult.transactionResult.isStatusSuccess).toBe(true);
   }
 
@@ -132,31 +146,27 @@ test('should perform token operations', async () => {
   const assetIdObj = assetIdCall.value;
   const assetIdString = typeof assetIdObj === 'string' ? assetIdObj : assetIdObj.bits;
 
-  console.log(`📊 Asset ID: ${assetIdString}`);
-
+  console.log('\nSupply Verification');
+  console.log('───────────────────');
   // Query the total supply after minting
-  console.log('📊 Checking total supply after minting...');
   const totalSupplyResult = await tokenContract.functions
     .total_supply(assetIdObj)
     .call();
   const totalSupplyCall = await totalSupplyResult.waitForResult();
   const totalSupply = totalSupplyCall.value;
 
-  console.log(`   Total supply after minting: ${totalSupply}`);
+  console.log(`Total supply: ${formatAmount(Number(totalSupply))}`);
 
   // Assert the total supply matches the minted amount
   expect(Number(totalSupply)).toBe(mintAmount);
-  console.log('✅ Total supply matches minted amount');
 
   // Additional verification: Check user balance
-  console.log('💰 Checking user balance...');
   const userBalance = await userWallet.getBalance(assetIdString);
-  console.log(`   User balance: ${userBalance.toString()}`);
+  console.log(`User balance: ${formatAmount(userBalance.toNumber())}`);
   expect(userBalance.toNumber()).toBe(mintAmount);
-  console.log('✅ User balance matches minted amount');
 
-  // Additional verification: Check token metadata
-  console.log('📋 Verifying token metadata...');
+  console.log('\nMetadata Verification');
+  console.log('─────────────────────');
   
   // Check name
   const nameResult = await tokenContract.functions
@@ -164,7 +174,7 @@ test('should perform token operations', async () => {
     .call();
   const nameCall = await nameResult.waitForResult();
   const tokenName = nameCall.value;
-  console.log(`   Token name: ${tokenName}`);
+  console.log(`Name: ${tokenName}`);
   expect(tokenName).toBe('MYTOKEN');
 
   // Check symbol
@@ -173,9 +183,10 @@ test('should perform token operations', async () => {
     .call();
   const symbolCall = await symbolResult.waitForResult();
   const tokenSymbol = symbolCall.value;
-  console.log(`   Token symbol: ${tokenSymbol}`);
+  console.log(`Symbol: ${tokenSymbol}`);
   expect(tokenSymbol).toBe('TOKEN');
 
-  console.log('✅ Token metadata verification passed');
-  console.log('✅ Token operations test completed successfully!');
+  console.log('\nTEST COMPLETED SUCCESSFULLY');
+  console.log('All token operations verified');
+  console.log(`Final user balance: ${formatAmount(userBalance.toNumber())} ${tokenSymbol}`);
 }); 

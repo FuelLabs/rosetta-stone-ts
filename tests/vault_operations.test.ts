@@ -33,6 +33,20 @@ const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
+ * Helper function to format amounts with commas
+ */
+function formatAmount(amount: number): string {
+  return amount.toLocaleString();
+}
+
+/**
+ * Helper function to truncate addresses for display
+ */
+function formatAddress(address: string): string {
+  return `${address.slice(0, 10)}...`;
+}
+
+/**
  * Deploys the SRC20 token contract with the given wallet and metadata.
  */
 async function deploySrc20Token(
@@ -41,8 +55,6 @@ async function deploySrc20Token(
   symbol: string,
   decimals: number
 ): Promise<Src20Token> {
-  console.log(`🚀 Deploying SRC20 token: ${name} (${symbol})`);
-
   // Configure the token parameters
   const tokenConfig = {
     NAME: name,
@@ -58,8 +70,6 @@ async function deploySrc20Token(
     configurableConstants: tokenConfig,
   });
   const { contract: deployedContract } = await waitForResult();
-
-  console.log(`✅ Token '${name}' (${symbol}) deployed at: ${deployedContract.id.toString()}`);
   
   return new Src20Token(deployedContract.id, wallet);
 }
@@ -70,13 +80,9 @@ async function deploySrc20Token(
 async function deployCrossContractCall(
   adminWallet: WalletUnlocked
 ): Promise<CrossContractCall> {
-  console.log('🚀 Deploying CrossContractCall contract...');
-
   const factory = new CrossContractCallFactory(adminWallet);
   const { waitForResult } = await factory.deploy();
   const { contract: deployedContract } = await waitForResult();
-
-  console.log(`✅ CrossContractCall deployed at: ${deployedContract.id.toString()}`);
   
   return new CrossContractCall(deployedContract.id, adminWallet);
 }
@@ -88,8 +94,6 @@ async function deployTokenVault(
   wallet: WalletUnlocked,
   crossContractCallContract: CrossContractCall
 ): Promise<TokenVault> {
-  console.log('🚀 Deploying TokenVault contract...');
-
   // Configure the vault parameters
   const vaultConfig = {
     CROSS_CONTRACT_CALL: { bits: crossContractCallContract.id.toB256() },
@@ -101,8 +105,6 @@ async function deployTokenVault(
     configurableConstants: vaultConfig,
   });
   const { contract: deployedContract } = await waitForResult();
-
-  console.log(`✅ TokenVault deployed at: ${deployedContract.id.toString()}`);
   
   return new TokenVault(deployedContract.id, wallet);
 }
@@ -111,7 +113,8 @@ async function deployTokenVault(
  * Test vault deposit and withdrawal functionality
  */
 test('should handle vault deposit and withdrawal', async () => {
-  console.log('🧪 Testing vault deposit and withdrawal...');
+  console.log('\nVAULT OPERATIONS TEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   // Set up test wallets
   using launched = await launchTestNode({
@@ -135,12 +138,13 @@ test('should handle vault deposit and withdrawal', async () => {
     throw new Error('Failed to initialize admin and user wallets');
   }
 
-  console.log('✅ Test wallets created:');
-  console.log(`   Admin wallet: ${adminWallet.address.toString()}`);
-  console.log(`   User wallet: ${userWallet.address.toString()}`);
+  console.log(`\nWallets initialized:`);
+  console.log(`  Admin: ${formatAddress(adminWallet.address.toString())}`);
+  console.log(`  User:  ${formatAddress(userWallet.address.toString())}`);
 
   // Deploy contracts
-  console.log('🚀 Deploying contracts...');
+  console.log('\nCONTRACT DEPLOYMENT');
+  console.log('────────────────────────────────────────────────────');
 
   const tokenContract = await deploySrc20Token(
     adminWallet,
@@ -156,16 +160,20 @@ test('should handle vault deposit and withdrawal', async () => {
     crossContractCallContract
   );
 
-  console.log('✅ All contracts deployed successfully');
+  console.log('All contracts deployed successfully');
+  console.log(`  Token:   ${formatAddress(tokenContract.id.toString())}`);
+  console.log(`  Vault:   ${formatAddress(vaultContract.id.toString())}`);
+  console.log(`  CrossCC: ${formatAddress(crossContractCallContract.id.toString())}`);
 
   // Mint tokens to the user wallet
+  console.log('\nTOKEN MINTING');
+  console.log('────────────────────────────────────────────────────');
+
   const mintAmount = TOKEN_AMOUNT;
   const recipient = { Address: { bits: userWallet.address.toB256() } };
-
-  console.log(`🔄 Creating admin token contract instance...`);
   const adminTokenContract = new Src20Token(tokenContract.id, adminWallet);
 
-  console.log(`🔄 Minting ${mintAmount} tokens to user...`);
+  console.log(`Minting ${formatAmount(mintAmount)} VAULT tokens to user (${formatAddress(userWallet.address.toString())})`);
   
   try {
     const mintCall = await adminTokenContract.functions
@@ -173,14 +181,11 @@ test('should handle vault deposit and withdrawal', async () => {
       .call();
 
     await mintCall.waitForResult();
-    console.log('✅ Mint successful');
   } catch (error) {
-    console.log(`❌ Mint failed: ${error}`);
-    throw error;
+    throw new Error(`Mint failed: ${error}`);
   }
 
-  // Check user balance after mint and get asset ID
-  console.log('🔄 Getting asset ID...');
+  // Get asset ID and check user balance
   const assetIdResult = await adminTokenContract.functions
     .get_asset_id()
     .call();
@@ -188,24 +193,23 @@ test('should handle vault deposit and withdrawal', async () => {
   const assetIdObj = assetIdCall.value;
   const assetIdString = typeof assetIdObj === 'string' ? assetIdObj : assetIdObj.bits;
 
-  console.log(`✅ Got asset ID: ${assetIdString}`);
-
   const userBalance = await userWallet.getBalance(assetIdString);
-  console.log(`💰 User balance before deposit: ${userBalance.toString()}`);
+  console.log(`Mint completed | Balance: ${formatAmount(userBalance.toNumber())} VAULT`);
 
   // Deposit tokens into the vault
+  console.log('\nVAULT DEPOSIT');
+  console.log('────────────────────────────────────────────────────');
+
   const depositAmount = 100_000;
 
-  console.log(`🔄 Preparing deposit of ${depositAmount} tokens...`);
+  console.log(`Depositing ${formatAmount(depositAmount)} VAULT tokens...`);
 
   // Check if user has enough balance
   if (userBalance.toNumber() < depositAmount) {
     throw new Error(
-      `❌ User has insufficient balance: ${userBalance.toString()} < ${depositAmount}`
+      `Insufficient balance: ${formatAmount(userBalance.toNumber())} < ${formatAmount(depositAmount)}`
     );
   }
-
-  console.log('🔄 Executing deposit with user wallet...');
 
   // Create user vault contract instance for deposit
   const userVaultContract = new TokenVault(vaultContract.id, userWallet);
@@ -219,15 +223,11 @@ test('should handle vault deposit and withdrawal', async () => {
       .call();
 
     await depositCall.waitForResult();
-    console.log('✅ Deposit successful');
   } catch (error) {
-    console.log(`❌ Deposit failed: ${error}`);
-    throw error;
+    throw new Error(`Deposit failed: ${error}`);
   }
 
   // Verify deposit
-  console.log('🔄 Verifying deposit...');
-  
   try {
     const depositBalanceResult = await vaultContract.functions
       .get_deposit({ Address: { bits: userWallet.address.toB256() } })
@@ -235,18 +235,19 @@ test('should handle vault deposit and withdrawal', async () => {
     const depositBalanceCall = await depositBalanceResult.waitForResult();
     const depositBalance = depositBalanceCall.value;
 
-    console.log(`✅ Got deposit balance: ${depositBalance}`);
     expect(Number(depositBalance)).toBe(depositAmount);
-    console.log('✅ Deposit verification passed');
+    console.log(`Deposit completed | Vault balance: ${formatAmount(Number(depositBalance))} VAULT`);
   } catch (error) {
-    console.log(`❌ Failed to get deposit balance: ${error}`);
-    throw error;
+    throw new Error(`Failed to verify deposit: ${error}`);
   }
 
   // Test withdrawal
+  console.log('\nVAULT WITHDRAWAL');
+  console.log('────────────────────────────────────────────────────');
+
   const withdrawalAmount = 50_000;
 
-  console.log(`🔄 Preparing withdrawal of ${withdrawalAmount} tokens...`);
+  console.log(`Withdrawing ${formatAmount(withdrawalAmount)} VAULT tokens...`);
 
   try {
     const withdrawCall = await userVaultContract.functions
@@ -257,35 +258,33 @@ test('should handle vault deposit and withdrawal', async () => {
       .call();
 
     await withdrawCall.waitForResult();
-    console.log('✅ Withdrawal successful');
   } catch (error) {
-    console.log(`❌ Withdrawal failed: ${error}`);
-    throw error;
+    throw new Error(`Withdrawal failed: ${error}`);
   }
 
   // Verify withdrawal
-  console.log('🔄 Verifying withdrawal...');
-  
   try {
     const remainingDepositResult = await vaultContract.functions
       .get_deposit({ Address: { bits: userWallet.address.toB256() } })
       .call();
     const remainingDepositCall = await remainingDepositResult.waitForResult();
     const remainingDeposit = remainingDepositCall.value;
-
-    console.log(`✅ Got remaining deposit balance: ${remainingDeposit}`);
     
     const expectedRemaining = depositAmount - withdrawalAmount;
     expect(Number(remainingDeposit)).toBe(expectedRemaining);
-    console.log('✅ Withdrawal verification passed');
+    console.log(`Withdrawal completed | Remaining vault balance: ${formatAmount(Number(remainingDeposit))} VAULT`);
   } catch (error) {
-    console.log(`❌ Failed to get remaining deposit balance: ${error}`);
-    throw error;
+    throw new Error(`Failed to verify withdrawal: ${error}`);
   }
 
-  // Check final user balance
-  const finalUserBalance = await userWallet.getBalance(assetIdString);
-  console.log(`💰 User final balance: ${finalUserBalance.toString()}`);
+  // Final summary
+  console.log('\nTEST SUMMARY');
+  console.log('────────────────────────────────────────────────────');
 
-  console.log('✅ Vault deposit and withdrawal test passed');
+  const finalUserBalance = await userWallet.getBalance(assetIdString);
+  console.log(`Final user wallet balance: ${formatAmount(finalUserBalance.toNumber())} VAULT`);
+  console.log(`Final vault balance: ${formatAmount(depositAmount - withdrawalAmount)} VAULT`);
+  console.log('All vault operations completed successfully');
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 });

@@ -22,6 +22,20 @@ import { MultiSig } from '../src/sway-api';
 import { launchTestNode } from 'fuels/test-utils';
 
 /**
+ * Helper function to format numbers with commas
+ */
+function formatAmount(amount: number): string {
+  return amount.toLocaleString();
+}
+
+/**
+ * Helper function to truncate addresses
+ */
+function formatAddress(address: string): string {
+  return `${address.substring(0, 10)}...`;
+}
+
+/**
  * Complete predicate workflow test with real funding and spending
  * 1. Set up wallets
  * 2. Configure predicate with signing wallets
@@ -30,6 +44,9 @@ import { launchTestNode } from 'fuels/test-utils';
  * 5. Spend funds from the predicate
  */
 test('should complete full predicate workflow with real funding and spending', async () => {
+  console.log('\nMULTI-SIG PREDICATE TEST');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━');
+
   // Launch test node with 3 wallets configured
   using launched = await launchTestNode({
     walletsConfig: {
@@ -55,20 +72,20 @@ test('should complete full predicate workflow with real funding and spending', a
     throw new Error('Failed to initialize wallets');
   }
 
-  // Log wallet addresses for debugging
-  console.log('Wallet 1 address:', wallet1.address.toString());
-  console.log('Wallet 2 address:', wallet2.address.toString());
-  console.log('Wallet 3 address:', wallet3.address.toString());
+  console.log('\nInitializing wallets...');
+  console.log(`Wallet 1: ${formatAddress(wallet1.address.toString())}`);
+  console.log(`Wallet 2: ${formatAddress(wallet2.address.toString())}`);
+  console.log(`Wallet 3: ${formatAddress(wallet3.address.toString())}`);
 
   // Check initial balances
   const balance1 = await wallet1.getBalance();
   const balance2 = await wallet2.getBalance();
   const balance3 = await wallet3.getBalance();
 
-  console.log('Initial balances:');
-  console.log('Wallet 1:', balance1.toString());
-  console.log('Wallet 2:', balance2.toString());
-  console.log('Wallet 3:', balance3.toString());
+  console.log('\nInitial balances:');
+  console.log(`Wallet 1: ${formatAmount(balance1.toNumber())}`);
+  console.log(`Wallet 2: ${formatAmount(balance2.toNumber())}`);
+  console.log(`Wallet 3: ${formatAmount(balance3.toNumber())}`);
 
   // Verify all wallets have initial funds
   expect(balance1.toNumber()).toBeGreaterThan(0);
@@ -76,7 +93,8 @@ test('should complete full predicate workflow with real funding and spending', a
   expect(balance3.toNumber()).toBeGreaterThan(0);
 
   // Step 2: Configure predicate with signing wallets
-  console.log('\n=== Configuring MultiSig Predicate ===');
+  console.log('\nCONFIGURING PREDICATE');
+  console.log('━━━━━━━━━━━━━━━━━━━━━');
   
   // Convert wallet addresses to the format expected by the predicate
   const signer1 = { bits: wallet1.address.toB256() };
@@ -89,11 +107,9 @@ test('should complete full predicate workflow with real funding and spending', a
     REQUIRED_SIGNATURES: 2,
   };
 
-  console.log('Predicate configuration:');
-  console.log('- Signer 1:', signer1.bits);
-  console.log('- Signer 2:', signer2.bits);
-  console.log('- Signer 3:', signer3.bits);
-  console.log('- Required signatures:', predicateConfig.REQUIRED_SIGNATURES);
+  console.log('MultiSig configuration:');
+  console.log(`Signers: 3 wallets`);
+  console.log(`Required signatures: ${predicateConfig.REQUIRED_SIGNATURES}`);
 
   // Step 3: Instantiate the predicate
   const predicate = new MultiSig({
@@ -101,8 +117,8 @@ test('should complete full predicate workflow with real funding and spending', a
     configurableConstants: predicateConfig,
   });
 
-  console.log('Predicate address:', predicate.address.toString());
-  console.log('Predicate instantiated successfully! ✅');
+  console.log(`Predicate: ${formatAddress(predicate.address.toString())}`);
+  console.log('Predicate instantiated\n');
 
   // Verify predicate was created correctly
   expect(predicate).toBeDefined();
@@ -110,22 +126,20 @@ test('should complete full predicate workflow with real funding and spending', a
   expect(predicate.address.toString()).toMatch(/^0x[a-fA-F0-9]{64}$/);
 
   // Step 4: Fund the predicate
-  console.log('\n=== Funding the Predicate ===');
+  console.log('FUNDING PREDICATE');
+  console.log('━━━━━━━━━━━━━━━━━');
   
   // Get the base asset ID for transfers
   const baseAssetId = await provider.getBaseAssetId();
-  console.log('Base asset ID:', baseAssetId);
 
   // Amount to transfer to the predicate
   const amountToPredicate = 500_000;
-  console.log('Amount to transfer to predicate:', amountToPredicate);
+  console.log(`Transferring ${formatAmount(amountToPredicate)} from Wallet 1...`);
 
   // Check wallet1 balance before transfer
   const wallet1BalanceBefore = await wallet1.getBalance();
-  console.log('Wallet 1 balance before transfer:', wallet1BalanceBefore.toString());
 
   // Transfer funds from wallet1 to the predicate
-  console.log('Transferring funds to predicate...');
   const transferTx = await wallet1.transfer(
     predicate.address,
     amountToPredicate,
@@ -134,7 +148,6 @@ test('should complete full predicate workflow with real funding and spending', a
 
   // Wait for the transaction to be confirmed
   const transferResult = await transferTx.waitForResult();
-  console.log('Transfer transaction status:', transferResult.status);
 
   // Verify the transfer was successful (check that it's not a failure status)
   expect(transferResult.status).not.toBe('Failure');
@@ -142,55 +155,56 @@ test('should complete full predicate workflow with real funding and spending', a
 
   // Check wallet1 balance after transfer
   const wallet1BalanceAfter = await wallet1.getBalance();
-  console.log('Wallet 1 balance after transfer:', wallet1BalanceAfter.toString());
 
   // Verify wallet1 balance decreased by the transfer amount (plus gas fees)
   expect(wallet1BalanceAfter.toNumber()).toBeLessThan(wallet1BalanceBefore.toNumber());
 
+  console.log(`Transfer completed | Status: ${transferResult.status}`);
+  console.log(`Wallet 1 balance: ${formatAmount(wallet1BalanceAfter.toNumber())}\n`);
+
   // Step 5: Validate predicate balance
-  console.log('\n=== Validating Predicate Balance ===');
+  console.log('VALIDATING BALANCE');
+  console.log('━━━━━━━━━━━━━━━━━━');
   
   // Get the predicate's balance
   const predicateBalance = await predicate.getBalance();
-  console.log('Predicate balance:', predicateBalance.toString());
 
   // Verify the predicate received the funds
   expect(predicateBalance.toNumber()).toBe(amountToPredicate);
 
   // Also check the predicate's balance using the provider
   const predicateBalanceFromProvider = await provider.getBalance(predicate.address, baseAssetId);
-  console.log('Predicate balance (from provider):', predicateBalanceFromProvider.toString());
 
   // Verify both balance checks match
   expect(predicateBalanceFromProvider.toNumber()).toBe(amountToPredicate);
 
-  console.log('✅ Predicate funded successfully!');
-  console.log('✅ Predicate balance validated!');
+  console.log(`Predicate balance: ${formatAmount(predicateBalance.toNumber())}`);
+  console.log('Balance validation completed\n');
 
   // Step 6: Test predicate functionality (simplified)
-  console.log('\n=== Testing Predicate Functionality ===');
+  console.log('TESTING FUNCTIONALITY');
+  console.log('━━━━━━━━━━━━━━━━━━━━━');
   
   // Create a receiver wallet to receive funds from the predicate
   const receiver = Wallet.generate({ provider });
-  console.log('Receiver address:', receiver.address.toString());
-
-  // Test that the predicate can be used for authorization
-  console.log('Testing predicate authorization logic...');
+  console.log(`Receiver: ${formatAddress(receiver.address.toString())}`);
   
   // Verify predicate configuration
-  console.log('Predicate signers configured:', predicateConfig.SIGNERS.length);
-  console.log('Required signatures:', predicateConfig.REQUIRED_SIGNATURES);
+  console.log(`Configured signers: ${predicateConfig.SIGNERS.length}`);
+  console.log(`Required signatures: ${predicateConfig.REQUIRED_SIGNATURES}`);
   
   // Test predicate address format
   const predicateAddress = predicate.address.toString();
-  console.log('Predicate address format valid:', predicateAddress.startsWith('0x') && predicateAddress.length === 66);
+  const isValidFormat = predicateAddress.startsWith('0x') && predicateAddress.length === 66;
+  console.log(`Address format valid: ${isValidFormat}\n`);
 
   // Test predicate spending with proper signatures
-  console.log('\n=== Testing Predicate Spending with Signatures ===');
+  console.log('TESTING SPENDING');
+  console.log('━━━━━━━━━━━━━━━━');
   
   // Amount to transfer from predicate (keep it small to account for gas)
   const transferAmount = 500;
-  console.log('Transfer amount:', transferAmount);
+  console.log(`Transfer amount: ${formatAmount(transferAmount)}`);
 
   // Get the resources (coins) from the predicate that we want to spend
   const predicateCoins = await predicate.getResourcesToSpend([
@@ -213,42 +227,36 @@ test('should complete full predicate workflow with real funding and spending', a
   transactionRequest.maxFee = bn(50000);
 
   // Sign the transaction with wallet1 and wallet2 (2-of-3 signatures)
-  console.log('Signing transaction with wallet1...');
+  console.log('Collecting signatures (2-of-3)...');
   const signature1 = await wallet1.signTransaction(transactionRequest);
-  
-  console.log('Signing transaction with wallet2...');
   const signature2 = await wallet2.signTransaction(transactionRequest);
 
   // Add the signatures as witness data
   transactionRequest.witnesses = [signature1, signature2];
 
   // Send the transaction using the predicate
-  console.log('Sending transaction with signatures...');
+  console.log('Executing transfer with signatures...');
   const transferOutTx = await predicate.sendTransaction(transactionRequest);
   
   // Wait for the transaction to be confirmed
   const predicateTransferResult = await transferOutTx.waitForResult();
-  console.log('Transfer transaction status:', predicateTransferResult.status);
 
   // Verify the transfer was successful
   expect(predicateTransferResult.status).not.toBe('Failure');
   expect(predicateTransferResult.status).not.toBe('Reverted');
 
-  console.log('✅ Predicate transfer with signatures successful!');
-
-  console.log('✅ Predicate functionality verified!');
-  console.log('✅ Multi-signature predicate setup successful!');
+  console.log(`Transfer status: ${predicateTransferResult.status}`);
+  console.log('Spending test completed\n');
 
   // Final summary
-  console.log('\n=== Final Summary ===');
-  console.log('✅ 3 wallets created and funded');
-  console.log('✅ MultiSig predicate instantiated with 2-of-3 configuration');
-  console.log('✅ Predicate funded with 50,000 units');
-  console.log('✅ Predicate balance validated');
-  console.log('✅ Predicate authorization logic configured');
-  console.log('✅ Complete predicate workflow successful!');
+  console.log('TEST SUMMARY');
+  console.log('━━━━━━━━━━━━');
+  console.log('✓ 3 wallets initialized');
+  console.log('✓ 2-of-3 MultiSig predicate configured');
+  console.log(`✓ Predicate funded with ${formatAmount(amountToPredicate)}`);
+  console.log('✓ Balance validation passed');
+  console.log('✓ Signature authorization tested');
+  console.log('✓ Complete workflow successful');
 
-  console.log('\nNote: The predicate spending functionality requires proper witness data');
-  console.log('and signature handling, which is a more complex implementation.');
-  console.log('The core predicate setup and funding are working correctly!');
+  console.log('\nTest completed successfully');
 });
