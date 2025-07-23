@@ -1,7 +1,6 @@
 /**
  * Advanced Patterns Tests (TypeScript)
  * 
- * This is a TypeScript equivalent of the Rust advanced_patterns.rs
  * Demonstrates advanced blockchain patterns including:
  * - Block manipulation
  * - Gas optimization
@@ -29,14 +28,13 @@ import {
 } from '../src/sway-api';
 import { launchTestNode } from 'fuels/test-utils';
 
-// Common test constants (matching Rust version)
+// Common test constants
 const TOKEN_AMOUNT = 1_000_000;
 const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
  * Deploys the SRC20 token contract with the given wallet and metadata.
- * (TypeScript equivalent of deploy_src20_token function)
  */
 async function deploySrc20Token(
   wallet: WalletUnlocked,
@@ -69,7 +67,6 @@ async function deploySrc20Token(
 
 /**
  * Deploys the CrossContractCall contract
- * (TypeScript equivalent of deploy_cross_contract_call function)
  */
 async function deployCrossContractCall(
   adminWallet: WalletUnlocked
@@ -87,7 +84,6 @@ async function deployCrossContractCall(
 
 /**
  * Deploys the TokenVault contract
- * (TypeScript equivalent of deploy_token_vault function)
  */
 async function deployTokenVault(
   wallet: WalletUnlocked,
@@ -114,12 +110,11 @@ async function deployTokenVault(
 
 /**
  * Test advanced blockchain patterns
- * (TypeScript equivalent of test_advanced_patterns)
  */
 test('should handle advanced patterns', async () => {
   console.log('🧪 Testing advanced patterns...');
 
-  // Set up test wallets (equivalent to Rust wallet setup)
+  // Set up test wallets
   using launched = await launchTestNode({
     walletsConfig: {
       count: 3,
@@ -142,7 +137,7 @@ test('should handle advanced patterns', async () => {
   console.log('✅ Test wallets created');
   console.log(`   Admin wallet: ${adminWallet.address.toString()}`);
 
-  // Deploy contracts (equivalent to Rust contract deployment)
+  // Deploy contracts
   console.log('🚀 Deploying contracts...');
 
   const tokenContract = await deploySrc20Token(
@@ -161,13 +156,13 @@ test('should handle advanced patterns', async () => {
 
   console.log('✅ All contracts deployed successfully');
 
-  // Test block manipulation (equivalent to Rust block manipulation)
+  // Test block manipulation
   console.log('🧪 Testing block manipulation...');
   
   const initialHeight = await provider.getBlockNumber();
   console.log(`📊 Initial block height: ${initialHeight}`);
 
-  // Produce blocks (equivalent to Rust produce_blocks)
+  // Produce blocks
   await provider.produceBlocks(5);
   const newHeight = await provider.getBlockNumber();
   console.log(`📊 New block height: ${newHeight}`);
@@ -175,18 +170,18 @@ test('should handle advanced patterns', async () => {
   expect(newHeight.toNumber()).toBe(initialHeight.toNumber() + 5);
   console.log('✅ Block manipulation test passed');
 
-  // Test gas optimization (equivalent to Rust gas optimization)
+  // Test gas optimization
   console.log('🧪 Testing gas optimization...');
   
   const adminTokenContract = new Src20Token(tokenContract.id, adminWallet);
   const recipient = { Address: { bits: adminWallet.address.toB256() } };
 
-  // Check wallet balance before transaction (equivalent to Rust base balance check)
+  // Check wallet balance before transaction
   const baseAssetId = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const baseBalance = await adminWallet.getBalance(baseAssetId);
   console.log(`💰 Base balance: ${baseBalance.toString()}`);
 
-  // Estimate gas cost (equivalent to Rust estimate_transaction_cost)
+  // Estimate gas cost
   console.log('⛽ Estimating gas cost...');
   
   try {
@@ -201,7 +196,7 @@ test('should handle advanced patterns', async () => {
 
     console.log('✅ Gas estimation completed');
 
-    // Test with custom transaction policies (equivalent to Rust custom policies)
+    // Test with custom transaction policies
     console.log('🧪 Testing custom transaction policies...');
     
     const customPolicies = {
@@ -225,7 +220,7 @@ test('should handle advanced patterns', async () => {
     // Verify transaction completed successfully
     expect(result.transactionResult.isStatusSuccess).toBe(true);
 
-    // Check final balances (equivalent to Rust balances check)
+    // Check final balances
     const balances = await adminWallet.getBalances();
     console.log(`💰 Final balances count: ${balances.balances.length}`);
     
@@ -243,7 +238,6 @@ test('should handle advanced patterns', async () => {
 
 /**
  * Test comprehensive logging functionality
- * (TypeScript equivalent of test_comprehensive_logging)
  */
 test('should handle comprehensive logging', async () => {
   console.log('🧪 Testing comprehensive logging...');
@@ -267,10 +261,10 @@ test('should handle comprehensive logging', async () => {
 
   console.log('✅ Token contract deployed for logging test');
 
-  // Test various operations with logging (equivalent to Rust logging operations)
+  // Test various operations with logging
   const recipient = { Address: { bits: wallet.address.toB256() } };
 
-  // Mint operation (equivalent to Rust mint with logging)
+  // Mint operation
   console.log('📝 Testing mint operation logging...');
   
   const mintCall = await tokenContract.functions
@@ -279,7 +273,7 @@ test('should handle comprehensive logging', async () => {
 
   const mintResult = await mintCall.waitForResult();
   
-  // Check transaction logs (equivalent to Rust decode_logs)
+  // Check transaction logs
   if (mintResult.transactionResult.receipts) {
     console.log(`📝 Total receipts: ${mintResult.transactionResult.receipts.length}`);
     
@@ -297,7 +291,7 @@ test('should handle comprehensive logging', async () => {
   const assetIdObj = assetIdCall.value;
   const assetIdString = typeof assetIdObj === 'string' ? assetIdObj : assetIdObj.bits;
 
-  // Test burn operation (equivalent to Rust burn with logging)
+  // Test burn operation
   console.log('🔥 Testing burn operation logging...');
   
   const burnAmount = 5000;
@@ -327,7 +321,6 @@ test('should handle comprehensive logging', async () => {
 
 /**
  * Test performance benchmarks
- * (TypeScript equivalent of test_performance_benchmarks)
  */
 test('should handle performance benchmarks', async () => {
   console.log('🧪 Testing performance benchmarks...');
@@ -352,7 +345,7 @@ test('should handle performance benchmarks', async () => {
 
   console.log('✅ Token contract deployed for performance test');
 
-  // Benchmark batch operations (equivalent to Rust batch operations)
+  // Benchmark batch operations
   const batchSize = 10;
   console.log(`⏱️  Starting batch of ${batchSize} operations...`);
   
@@ -375,7 +368,7 @@ test('should handle performance benchmarks', async () => {
   const elapsed = Date.now() - startTime;
   console.log(`⏱️  Batch of ${batchSize} operations took: ${elapsed}ms`);
 
-  // Verify final state (equivalent to Rust final balance verification)
+  // Verify final state
   console.log('🔍 Verifying final state...');
   
   const assetIdResult = await adminTokenContract.functions

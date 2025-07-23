@@ -1,8 +1,7 @@
 /**
  * Multi Wallet Operations Tests (TypeScript)
  * 
- * This is a TypeScript equivalent of the Rust multi_wallet_operations.rs
- * Demonstrates multi-wallet interactions using Fuel TypeScript SDK including:
+ * Demonstrates multi-wallet interactions including:
  * - Minting to multiple users
  * - Token transfers between wallets
  * - Multi-wallet balance management
@@ -21,14 +20,13 @@ import {
 import { Src20Token, Src20TokenFactory } from '../src/sway-api';
 import { launchTestNode } from 'fuels/test-utils';
 
-// Common test constants (matching Rust version)
+// Common test constants
 const TOKEN_AMOUNT = 1_000_000;
 const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
  * Deploys the SRC20 token contract with the given wallet and metadata.
- * (TypeScript equivalent of deploy_src20_token function)
  */
 async function deploySrc20Token(
   wallet: WalletUnlocked,
@@ -61,12 +59,11 @@ async function deploySrc20Token(
 
 /**
  * Test multi-wallet interactions: minting to multiple users and transferring tokens between them.
- * (TypeScript equivalent of test_multi_wallet_interactions)
  */
 test('should handle multi-wallet interactions', async () => {
   console.log('🧪 Testing multi-wallet interactions...');
 
-  // Set up test wallets (equivalent to Rust wallet setup with 5 wallets)
+  // Set up test wallets with 5 wallets
   using launched = await launchTestNode({
     walletsConfig: {
       count: 5,
@@ -80,7 +77,7 @@ test('should handle multi-wallet interactions', async () => {
     throw new Error('Failed to initialize 5 wallets');
   }
 
-  // Extract admin wallet and user wallets (equivalent to Rust wallet assignment)
+  // Extract admin wallet and user wallets
   const adminWallet = wallets[4]; // Last wallet as admin
   const userWallets = wallets.slice(0, 4); // First 4 wallets as users
 
@@ -96,7 +93,7 @@ test('should handle multi-wallet interactions', async () => {
     }
   });
 
-  // Deploy the SRC20 token contract (equivalent to deploy_src20_token call)
+  // Deploy the SRC20 token contract
   const tokenContract = await deploySrc20Token(
     adminWallet,
     "MULTITK",
@@ -112,7 +109,7 @@ test('should handle multi-wallet interactions', async () => {
 
   console.log('✅ Admin token contract instance created');
 
-  // Mint tokens to ALL user wallets (equivalent to Rust minting loop)
+  // Mint tokens to ALL user wallets
   console.log('🔄 Starting multi-wallet minting...');
   
   for (let i = 0; i < userWallets.length; i++) {
@@ -137,7 +134,7 @@ test('should handle multi-wallet interactions', async () => {
 
   console.log('✅ Multi-wallet minting completed');
 
-  // Get the asset ID for transfers (equivalent to get_asset_id call)
+  // Get the asset ID for transfers
   const assetIdResult = await adminTokenContract.functions
     .get_asset_id()
     .call();
@@ -147,7 +144,7 @@ test('should handle multi-wallet interactions', async () => {
 
   console.log(`📊 Asset ID: ${assetIdString}`);
 
-  // Verify balances before transfer (equivalent to Rust balance checking)
+  // Verify balances before transfer
   console.log('🔍 Checking balances before transfer...');
   for (let i = 0; i < userWallets.length; i++) {
     const wallet = userWallets[i];
@@ -157,7 +154,7 @@ test('should handle multi-wallet interactions', async () => {
     }
   }
 
-  // Now perform the transfer (equivalent to Rust transfer operation)
+  // Now perform the transfer
   const transferAmount = 50_000;
 
   const senderWallet = userWallets[0];
@@ -172,7 +169,7 @@ test('should handle multi-wallet interactions', async () => {
   console.log(`To: ${recipientWallet.address.toString()} (User 2)`);
   console.log(`Asset ID: ${assetIdString}`);
 
-  // Get initial balances for proper assertion (equivalent to Rust initial balance tracking)
+  // Get initial balances for proper assertion
   const senderInitialBalance = await senderWallet.getBalance(assetIdString);
   const recipientInitialBalance = await recipientWallet.getBalance(assetIdString);
 
@@ -180,14 +177,14 @@ test('should handle multi-wallet interactions', async () => {
   console.log(`  Sender: ${senderInitialBalance.toString()}`);
   console.log(`  Recipient: ${recipientInitialBalance.toString()}`);
 
-  // Verify sender has enough tokens (equivalent to Rust balance verification)
+  // Verify sender has enough tokens
   if (senderInitialBalance.toNumber() < transferAmount) {
     throw new Error(
       `❌ Sender has insufficient balance: ${senderInitialBalance.toString()} < ${transferAmount}`
     );
   }
 
-  // Attempt to transfer tokens from user1 to user2 (equivalent to Rust transfer)
+  // Attempt to transfer tokens from user1 to user2
   console.log('🔄 Executing transfer...');
   try {
     const transferTx = await senderWallet.transfer(
@@ -206,7 +203,7 @@ test('should handle multi-wallet interactions', async () => {
 
   console.log('🔄 Checking balances after transfer...');
 
-  // Query balances after transfer (equivalent to Rust final balance checking)
+  // Query balances after transfer
   const senderFinalBalance = await senderWallet.getBalance(assetIdString);
   const recipientFinalBalance = await recipientWallet.getBalance(assetIdString);
 
@@ -214,7 +211,7 @@ test('should handle multi-wallet interactions', async () => {
   console.log(`  Sender: ${senderFinalBalance.toString()} (was ${senderInitialBalance.toString()})`);
   console.log(`  Recipient: ${recipientFinalBalance.toString()} (was ${recipientInitialBalance.toString()})`);
 
-  // Calculate expected balances based on initial amounts (equivalent to Rust expected balance calculation)
+  // Calculate expected balances based on initial amounts
   const expectedSenderBalance = senderInitialBalance.toNumber() - transferAmount;
   const expectedRecipientBalance = recipientInitialBalance.toNumber() + transferAmount;
 
@@ -222,7 +219,7 @@ test('should handle multi-wallet interactions', async () => {
   console.log(`  Expected sender balance: ${expectedSenderBalance}`);
   console.log(`  Expected recipient balance: ${expectedRecipientBalance}`);
 
-  // Assert balances are as expected after transfer (equivalent to Rust assertions)
+  // Assert balances are as expected after transfer
   expect(senderFinalBalance.toNumber()).toBe(expectedSenderBalance);
   expect(recipientFinalBalance.toNumber()).toBe(expectedRecipientBalance);
 

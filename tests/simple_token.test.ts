@@ -1,8 +1,7 @@
 /**
  * Simple Token Test (TypeScript)
  * 
- * This is a TypeScript equivalent of the Rust simple_token_test.rs
- * Demonstrates basic SRC20 token functionality testing using Fuel TypeScript SDK
+ * Demonstrates basic SRC20 token functionality testing
  */
 
 import { test, expect } from "bun:test";
@@ -17,19 +16,19 @@ import {
 import { Src20Token, Src20TokenFactory } from '../src/sway-api';
 import { launchTestNode } from 'fuels/test-utils';
 
-// Test constants (matching Rust version)
+// Test constants
 const TOKEN_AMOUNT = 1_000_000;
 const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
- * Test 1: Simple token operations (TypeScript equivalent of test_simple_token_operations)
+ * Test 1: Simple token operations
  * Covers: deployment, minting, balance checks, supply verification, metadata validation
  */
 test('should perform simple token operations', async () => {
   console.log('🧪 Testing simple token operations...');
 
-  // Set up test wallets (equivalent to Rust wallet setup)
+  // Set up test wallets
   using launched = await launchTestNode({
     walletsConfig: {
       count: 3,
@@ -48,10 +47,10 @@ test('should perform simple token operations', async () => {
   console.log(`   Admin wallet: ${adminWallet.address.toString()}`);
   console.log(`   User wallet: ${userWallet.address.toString()}`);
 
-  // Deploy the SRC20 token contract (equivalent to Rust contract deployment)
+  // Deploy the SRC20 token contract
   console.log('🚀 Deploying SRC20 token contract...');
 
-  // Configure the token parameters (matching Rust configurables)
+  // Configure the token parameters
   const tokenConfig = {
     NAME: 'MYTOKEN',
     SYMBOL: 'TOKEN', 
@@ -81,7 +80,7 @@ test('should perform simple token operations', async () => {
 
   console.log('✅ Contract instances created for admin and user');
 
-  // Get the asset ID for this token (equivalent to Rust get_asset_id call)
+  // Get the asset ID for this token
   console.log('🔍 Getting asset ID...');
   const assetIdResult = await adminTokenContract.functions
     .get_asset_id()
@@ -92,7 +91,7 @@ test('should perform simple token operations', async () => {
 
   console.log(`📊 Asset ID: ${assetIdString}`);
 
-  // Test 1: Check initial supply (equivalent to Rust initial supply check)
+  // Test 1: Check initial supply
   console.log('📊 Checking initial token supply...');
   const initialSupplyResult = await userTokenContract.functions
     .total_supply(assetIdObj)
@@ -104,7 +103,7 @@ test('should perform simple token operations', async () => {
   expect(Number(initialSupply)).toBe(0); // Expecting 0 for initial supply
   console.log('✅ Initial supply check passed');
 
-  // Test 2: Mint tokens (equivalent to Rust mint operation)
+  // Test 2: Mint tokens
   console.log('🪙 Minting tokens to admin...');
   const mintAmount = TOKEN_AMOUNT;
   const recipient = { Address: { bits: adminWallet.address.toB256() } };
@@ -117,7 +116,7 @@ test('should perform simple token operations', async () => {
   console.log(`   Minted ${mintAmount} tokens to admin`);
   console.log(`   Mint transaction completed`);
 
-  // Test 3: Check admin balance (equivalent to Rust balance check)
+  // Test 3: Check admin balance
   console.log('💰 Checking admin balance...');
   const adminBalance = await adminWallet.getBalance(assetIdString);
 
@@ -125,7 +124,7 @@ test('should perform simple token operations', async () => {
   expect(adminBalance.toNumber()).toBe(mintAmount);
   console.log('✅ Admin balance check passed');
 
-  // Test 4: Check total supply after minting (equivalent to Rust supply verification)
+  // Test 4: Check total supply after minting
   console.log('📊 Checking total supply after minting...');
   const totalSupplyResult = await userTokenContract.functions
     .total_supply(assetIdObj)
@@ -137,7 +136,7 @@ test('should perform simple token operations', async () => {
   expect(Number(totalSupply)).toBe(mintAmount);
   console.log('✅ Total supply check passed');
 
-  // Test 5: Check token metadata (equivalent to Rust metadata validation)
+  // Test 5: Check token metadata
   console.log('📋 Checking token metadata...');
   const nameResult = await userTokenContract.functions
     .name(assetIdObj)
@@ -162,13 +161,13 @@ test('should perform simple token operations', async () => {
 });
 
 /**
- * Test 2: Token minting scenarios (TypeScript equivalent of test_token_minting_scenarios)
+ * Test 2: Token minting scenarios
  * Tests multiple minting operations with different amounts
  */
 test('should handle token minting scenarios', async () => {
   console.log('🧪 Testing token minting scenarios...');
 
-  // Set up test wallets (equivalent to Rust wallet setup)
+  // Set up test wallets
   using launched = await launchTestNode({
     walletsConfig: {
       count: 2,
@@ -186,7 +185,7 @@ test('should handle token minting scenarios', async () => {
   console.log('✅ Test wallets created:');
   console.log(`   Admin wallet: ${adminWallet.address.toString()}`);
 
-  // Deploy the SRC20 token contract (equivalent to Rust contract deployment)
+  // Deploy the SRC20 token contract
   console.log('🚀 Deploying SRC20 token contract...');
 
   // Configure the token parameters (different from first test)
@@ -224,7 +223,7 @@ test('should handle token minting scenarios', async () => {
 
   console.log(`📊 Asset ID: ${assetIdString}`);
 
-  // Test minting different amounts (equivalent to Rust mint_amounts vector)
+  // Test minting different amounts
   const mintAmounts = [1000, 10000, 100000, 1000000];
   
   for (const amount of mintAmounts) {

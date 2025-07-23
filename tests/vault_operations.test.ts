@@ -1,7 +1,6 @@
 /**
  * Vault Operations Tests (TypeScript)
  * 
- * This is a TypeScript equivalent of the Rust vault_operations.rs
  * Demonstrates TokenVault contract operations including:
  * - Vault deposits
  * - Vault withdrawals
@@ -28,14 +27,13 @@ import {
 } from '../src/sway-api';
 import { launchTestNode } from 'fuels/test-utils';
 
-// Common test constants (matching Rust version)
+// Common test constants
 const TOKEN_AMOUNT = 1_000_000;
 const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
  * Deploys the SRC20 token contract with the given wallet and metadata.
- * (TypeScript equivalent of deploy_src20_token function)
  */
 async function deploySrc20Token(
   wallet: WalletUnlocked,
@@ -68,7 +66,6 @@ async function deploySrc20Token(
 
 /**
  * Deploys the CrossContractCall contract
- * (TypeScript equivalent of deploy_cross_contract_call function)
  */
 async function deployCrossContractCall(
   adminWallet: WalletUnlocked
@@ -86,7 +83,6 @@ async function deployCrossContractCall(
 
 /**
  * Deploys the TokenVault contract
- * (TypeScript equivalent of deploy_token_vault function)
  */
 async function deployTokenVault(
   wallet: WalletUnlocked,
@@ -113,12 +109,11 @@ async function deployTokenVault(
 
 /**
  * Test vault deposit and withdrawal functionality
- * (TypeScript equivalent of test_vault_deposit)
  */
 test('should handle vault deposit and withdrawal', async () => {
   console.log('🧪 Testing vault deposit and withdrawal...');
 
-  // Set up test wallets (equivalent to Rust wallet setup)
+  // Set up test wallets
   using launched = await launchTestNode({
     walletsConfig: {
       count: 3,
@@ -132,7 +127,7 @@ test('should handle vault deposit and withdrawal', async () => {
     throw new Error('Failed to initialize 3 wallets');
   }
 
-  // Extract admin wallet and user wallet (equivalent to Rust wallet assignment)
+  // Extract admin wallet and user wallet
   const adminWallet = wallets[2]; // Last wallet as admin
   const userWallet = wallets[1]; // Second wallet as user
 
@@ -144,7 +139,7 @@ test('should handle vault deposit and withdrawal', async () => {
   console.log(`   Admin wallet: ${adminWallet.address.toString()}`);
   console.log(`   User wallet: ${userWallet.address.toString()}`);
 
-  // Deploy contracts (equivalent to Rust contract deployment)
+  // Deploy contracts
   console.log('🚀 Deploying contracts...');
 
   const tokenContract = await deploySrc20Token(
@@ -163,7 +158,7 @@ test('should handle vault deposit and withdrawal', async () => {
 
   console.log('✅ All contracts deployed successfully');
 
-  // Mint tokens to the user wallet (equivalent to Rust mint operation)
+  // Mint tokens to the user wallet
   const mintAmount = TOKEN_AMOUNT;
   const recipient = { Address: { bits: userWallet.address.toB256() } };
 
@@ -198,7 +193,7 @@ test('should handle vault deposit and withdrawal', async () => {
   const userBalance = await userWallet.getBalance(assetIdString);
   console.log(`💰 User balance before deposit: ${userBalance.toString()}`);
 
-  // Deposit tokens into the vault (equivalent to Rust deposit operation)
+  // Deposit tokens into the vault
   const depositAmount = 100_000;
 
   console.log(`🔄 Preparing deposit of ${depositAmount} tokens...`);
@@ -230,7 +225,7 @@ test('should handle vault deposit and withdrawal', async () => {
     throw error;
   }
 
-  // Verify deposit (equivalent to Rust deposit verification)
+  // Verify deposit
   console.log('🔄 Verifying deposit...');
   
   try {
@@ -248,7 +243,7 @@ test('should handle vault deposit and withdrawal', async () => {
     throw error;
   }
 
-  // Test withdrawal (equivalent to Rust withdrawal operation)
+  // Test withdrawal
   const withdrawalAmount = 50_000;
 
   console.log(`🔄 Preparing withdrawal of ${withdrawalAmount} tokens...`);
@@ -268,7 +263,7 @@ test('should handle vault deposit and withdrawal', async () => {
     throw error;
   }
 
-  // Verify withdrawal (equivalent to Rust withdrawal verification)
+  // Verify withdrawal
   console.log('🔄 Verifying withdrawal...');
   
   try {
@@ -288,7 +283,7 @@ test('should handle vault deposit and withdrawal', async () => {
     throw error;
   }
 
-  // Check final user balance (equivalent to Rust final balance check)
+  // Check final user balance
   const finalUserBalance = await userWallet.getBalance(assetIdString);
   console.log(`💰 User final balance: ${finalUserBalance.toString()}`);
 

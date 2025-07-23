@@ -1,7 +1,6 @@
 /**
  * Script Operations Tests (TypeScript)
  * 
- * This is a TypeScript equivalent of the Rust script_operations.rs
  * Demonstrates script execution patterns including:
  * - Script deployment and configuration
  * - Manual transaction building
@@ -24,14 +23,13 @@ import {
 } from '../src/sway-api';
 import { launchTestNode } from 'fuels/test-utils';
 
-// Common test constants (matching Rust version)
+// Common test constants
 const TOKEN_AMOUNT = 1_000_000;
 const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
  * Deploys the SRC20 token contract with the given wallet and metadata.
- * (TypeScript equivalent of deploy_src20_token function)
  */
 async function deploySrc20Token(
   wallet: WalletUnlocked,
@@ -64,12 +62,11 @@ async function deploySrc20Token(
 
 /**
  * Test simple script execution with multiple recipients
- * (TypeScript equivalent of test_simple_script_execution)
  */
 test('should handle simple script execution', async () => {
   console.log('🧪 Testing simple script execution...');
 
-  // Set up test wallets (equivalent to Rust wallet setup)
+  // Set up test wallets
   using launched = await launchTestNode({
     walletsConfig: {
       count: 3,
@@ -93,7 +90,7 @@ test('should handle simple script execution', async () => {
   console.log(`👤 Admin wallet: ${adminWallet.address.toString()}`);
   console.log(`👤 Recipient wallet: ${recipientWallet.address.toString()}`);
 
-  // Deploy the SRC20 token contract (equivalent to Rust token deployment)
+  // Deploy the SRC20 token contract
   const tokenContract = await deploySrc20Token(
     adminWallet,
     "SCRIPTK",
@@ -110,7 +107,7 @@ test('should handle simple script execution', async () => {
 
   const adminTokenContract = new Src20Token(tokenContract.id, adminWallet);
 
-  // Mint tokens to admin (equivalent to Rust mint operation)
+  // Mint tokens to admin
   const mintAmount = 10000; // Mint plenty
   console.log(`🔄 Minting ${mintAmount} tokens to admin wallet...`);
 

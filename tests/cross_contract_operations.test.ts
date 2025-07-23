@@ -1,7 +1,6 @@
 /**
  * Cross Contract Operations Tests (TypeScript)
  * 
- * This is a TypeScript equivalent of the Rust cross_contract_operations.rs
  * Demonstrates cross-contract communication including:
  * - Cross-contract calls
  * - Contract-to-contract interactions
@@ -28,14 +27,13 @@ import {
 } from '../src/sway-api';
 import { launchTestNode } from 'fuels/test-utils';
 
-// Common test constants (matching Rust version)
+// Common test constants
 const TOKEN_AMOUNT = 1_000_000;
 const SUB_ID_ARRAY = new Uint8Array(32).fill(0);
 const SUB_ID = '0x' + Array.from(SUB_ID_ARRAY, byte => byte.toString(16).padStart(2, '0')).join('');
 
 /**
  * Deploys the SRC20 token contract with the given wallet and metadata.
- * (TypeScript equivalent of deploy_src20_token function)
  */
 async function deploySrc20Token(
   wallet: WalletUnlocked,
@@ -68,7 +66,6 @@ async function deploySrc20Token(
 
 /**
  * Deploys the CrossContractCall contract
- * (TypeScript equivalent of deploy_cross_contract_call function)
  */
 async function deployCrossContractCall(
   adminWallet: WalletUnlocked
@@ -93,7 +90,6 @@ async function deployCrossContractCall(
 
 /**
  * Deploys the TokenVault contract
- * (TypeScript equivalent of deploy_token_vault function)
  */
 async function deployTokenVault(
   wallet: WalletUnlocked,
@@ -120,12 +116,11 @@ async function deployTokenVault(
 
 /**
  * Test cross-contract call functionality
- * (TypeScript equivalent of test_cross_contract_call)
  */
 test('should handle cross-contract call', async () => {
   console.log('🧪 Testing cross-contract call...');
 
-  // Set up test wallets (equivalent to Rust wallet setup)
+  // Set up test wallets
   using launched = await launchTestNode({
     walletsConfig: {
       count: 3,
@@ -139,7 +134,7 @@ test('should handle cross-contract call', async () => {
     throw new Error('Failed to initialize 3 wallets');
   }
 
-  // Extract admin wallet and user wallet (equivalent to Rust wallet assignment)
+  // Extract admin wallet and user wallet
   const adminWallet = wallets[2]; // Last wallet as admin
   const userWallet = wallets[1]; // Second wallet as user
 
@@ -151,7 +146,7 @@ test('should handle cross-contract call', async () => {
   console.log(`   Admin wallet: ${adminWallet.address.toString()}`);
   console.log(`   User wallet: ${userWallet.address.toString()}`);
 
-  // Deploy contracts (equivalent to Rust contract deployment)
+  // Deploy contracts
   console.log('🚀 Deploying contracts...');
 
   const tokenContract = await deploySrc20Token(
@@ -173,10 +168,9 @@ test('should handle cross-contract call', async () => {
 
   console.log('✅ All contracts deployed successfully');
 
-  // 🔧 FIX: Mint tokens to ADMIN wallet instead of user wallet
-  // Since the CrossContractCall requires admin authorization
+  // Mint tokens to admin wallet for cross-contract authorization
   const mintAmount = TOKEN_AMOUNT;
-  const recipient = { Address: { bits: adminWallet.address.toB256() } }; // ← Changed to admin_wallet
+  const recipient = { Address: { bits: adminWallet.address.toB256() } };
 
   const adminTokenContract = new Src20Token(tokenContract.id, adminWallet);
 
@@ -204,7 +198,7 @@ test('should handle cross-contract call', async () => {
 
   console.log(`📊 Asset ID: ${assetIdString}`);
 
-  // 🔧 FIX: Check admin wallet balance instead of user wallet
+  // Check admin wallet balance
   const adminBalance = await adminWallet.getBalance(assetIdString);
   console.log(`💰 Admin balance before deposit: ${adminBalance.toString()}`);
 
@@ -237,10 +231,7 @@ test('should handle cross-contract call', async () => {
     );
   }
 
-  // 🔧 FIX: The cross-contract call should work now because:
-  // 1. Admin wallet has the tokens (we minted to admin)
-  // 2. Admin wallet is calling the CrossContractCall contract
-  // 3. CrossContractCall contract will forward tokens to vault for the user
+  // Execute cross-contract deposit call
   try {
     const crossContractDepositCall = await crossContractCallContract.functions
       .deposit(
@@ -286,7 +277,7 @@ test('should handle cross-contract call', async () => {
   
   console.log('✅ Cross Contract Call Deposit verification passed');
 
-  // 🔧 BONUS: Verify admin wallet balance decreased
+  // Verify admin wallet balance decreased
   const adminBalanceAfter = await adminWallet.getBalance(assetIdString);
   console.log(`💰 Admin balance after deposit: ${adminBalanceAfter.toString()}`);
   
@@ -297,13 +288,12 @@ test('should handle cross-contract call', async () => {
 });
 
 /**
- * 🔧 ALTERNATIVE TEST: If you want to test with user wallet sending tokens
- * (TypeScript equivalent of test_cross_contract_call_user_sends)
+ * Test unauthorized cross-contract calls with user wallet
  */
 test('should reject unauthorized cross-contract calls', async () => {
   console.log('🧪 Testing cross-contract call with user sending tokens (should fail)...');
 
-  // Set up test wallets (equivalent to Rust wallet setup)
+  // Set up test wallets
   using launched = await launchTestNode({
     walletsConfig: {
       count: 3,
