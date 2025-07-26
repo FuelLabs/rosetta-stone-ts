@@ -98,21 +98,6 @@ Tests run in simulated mode by default, using a temporary in-memory blockchain:
 bun test
 ```
 
-### Real Node Mode
-To run tests against a local Fuel node for real on-chain transactions:
-
-1. Start a local Fuel node:
-```bash
-bunx fuels dev
-```
-
-2. Wait for the node to be ready (check logs for "Dev completed successfully")
-
-3. Run tests (they will automatically detect and connect to the running node):
-```bash
-bun test
-```
-
 ## 📚 Key Features Demonstrated
 
 ### Token Operations
