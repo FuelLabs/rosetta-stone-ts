@@ -1,8 +1,17 @@
 import { createConfig } from 'fuels';
 
 export default createConfig({
+  contracts: [
+    'sway-programs/contracts/cross-contract-call',
+    'sway-programs/contracts/src20-token',
+    'sway-programs/contracts/token-vault',
+  ],
   predicates: [
-        'predicates/multi-sig',
+    'sway-programs/predicates/multi-sig',
+  ],
+  scripts: [
+    'sway-programs/scripts/multi-asset-transfer',
+    'sway-programs/scripts/multi-sig-debug',
   ],
   output: './src/sway-api',
 });

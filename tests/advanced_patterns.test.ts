@@ -192,22 +192,27 @@ test('should handle advanced patterns', async () => {
   const baseBalance = await adminWallet.getBalance(baseAssetId);
   console.log(`Base balance: ${formatAmount(baseBalance.toNumber())}`);
 
-  // Estimate gas cost
+  // Estimate gas cost using new assembleTx method
   console.log('Estimating gas cost...');
   
   try {
-    const estimatedCost = await adminTokenContract.functions
+    const request = await adminTokenContract.functions
       .mint(recipient, SUB_ID, TOKEN_AMOUNT)
-      .getTransactionCost();
+      .getTransactionRequest();
 
-    console.log(`Gas used: ${estimatedCost.gasUsed.toString()}`);
-    console.log(`Gas price: ${estimatedCost.gasPrice.toString()}`);
+    const { assembledRequest, gasPrice } = await provider.assembleTx({
+      request,
+      feePayerAccount: adminWallet,
+    });
+
+    console.log(`Gas used: ${assembledRequest.gasLimit.toString()}`);
+    console.log(`Gas price: ${gasPrice.toString()}`);
 
     // Test with custom transaction policies
     console.log('\nTesting custom transaction policies...');
     
     const customPolicies = {
-      gasLimit: estimatedCost.gasUsed.mul(2),
+      gasLimit: assembledRequest.gasLimit.mul(2),
     };
 
     console.log(`Custom gas limit: ${customPolicies.gasLimit.toString()}`);
