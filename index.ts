@@ -1,1 +1,0 @@
-cd console.log("Hello via Bun!");
