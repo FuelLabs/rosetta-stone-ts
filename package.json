@@ -4,12 +4,15 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build": "bun run build:all",
     "build:sway": "bun run build:contracts && bun run build:predicates && bun run build:scripts",
     "build:all": "bun run build:sway && bun run generate:types",
     "build:contracts": "find sway-programs/contracts -name 'Forc.toml' -execdir forc build \\;",
     "build:predicates": "find sway-programs/predicates -name 'Forc.toml' -execdir forc build \\;", 
     "build:scripts": "if [ -d sway-programs/scripts ]; then find sway-programs/scripts -name 'Forc.toml' -execdir forc build \\; ; fi",
-    "generate:types": "fuels typegen -i sway-programs/contracts/**/out/debug/**-abi.json -i sway-programs/predicates/**/out/debug/**-abi.json -i sway-programs/scripts/**/out/debug/**-abi.json -o src/sway-api"
+    "generate:types": "fuels typegen -i sway-programs/contracts/**/out/debug/**-abi.json -i sway-programs/predicates/**/out/debug/**-abi.json -i sway-programs/scripts/**/out/debug/**-abi.json -o src/sway-api",
+    "type-check": "bunx tsc --noEmit",
+    "test": "bun test"
   },
   "devDependencies": {
     "@types/bun": "latest",
