@@ -1,6 +1,6 @@
 # Rosetta Stone TS - Fuel Blockchain Integration Testing
 
-[![CI](https://github.com/USERNAME/rosetta-stone-ts/workflows/CI/badge.svg)](https://github.com/USERNAME/rosetta-stone-ts/actions)
+[![CI](https://github.com/FuelLabs/rosetta-stone-ts/workflows/CI/badge.svg)](https://github.com/FuelLabs/rosetta-stone-ts/actions)
 
 A comprehensive TypeScript + Sway integration testing template for the Fuel blockchain ecosystem. This project demonstrates real-world patterns for building and testing Fuel applications with a focus on maintainability and beginner-friendly organization.
 
